@@ -45,7 +45,8 @@ async def analyze_musical_thought(
         
         return feedback
     except ValueError as ve:
-        raise HTTPException(status_code=500, detail=str(ve))
+        print(f"Configuration Error: {ve}")
+        raise HTTPException(status_code=500, detail="서버 내부 설정 오류가 발생했습니다. 잠시 후 다시 시도해주세요.")
     except Exception as e:
         print(f"Error during LLM call or DB save: {e}")
         raise HTTPException(status_code=500, detail="처리 중 오류가 발생했습니다.")

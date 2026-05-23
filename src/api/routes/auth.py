@@ -12,7 +12,9 @@ from src.api.database import get_db
 from src.api.models import User
 
 # JWT 설정
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "supersecretkey_for_music_app")
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError("CRITICAL SECURITY ERROR: JWT_SECRET_KEY environment variable is missing!")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 # 7 days
 

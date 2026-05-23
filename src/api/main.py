@@ -16,10 +16,15 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# CORS 설정 (프론트엔드 연동을 위해 개방)
+# CORS 설정 (보안 강화를 위해 특정 출처만 허용)
+ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS", 
+    "https://music-thought-web.onrender.com,capacitor://localhost,http://localhost:5173"
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
