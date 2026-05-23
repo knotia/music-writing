@@ -1,0 +1,27 @@
+{
+  "user_analysis_request": {
+    "user_id": "usr_12345",
+    "session_id": "sess_98765",
+    "raw_sentence": "이 곡은 C 조에서 시작해 빠르게 D 조로 넘어가면서 강한 긴장감을 주고, 피아노가 점점 커진다.",
+    "target_music_id": "music_001",
+    "extracted_elements": {
+      "tone_choice": "C 조에서 D 조로 전환",
+      "rhythm_pattern": "빠른 전환",
+      "emotional_impact": "강한 긴장감",
+      "harmony": null,
+      "instrumentation": "피아노 음량 증가"
+    }
+  },
+  "expert_feedback": {
+    "feedback_id": "fb_11111",
+    "user_session_id": "sess_98765",
+    "thinking_structure": "contrastive",
+    "logic_evaluation": {
+      "is_accurate": true,
+      "error_type": "none",
+      "rationale": "C 조에서 D 조로의 전환을 인지하고 이를 긴장감으로 연결한 점은 이론적으로 타당합니다."
+    },
+    "translated_expert_sentence": "이 곡은 C 장조에서 시작하여 D 장조로의 직접 전조(Direct Modulation)를 통해 구조적 대조를 이루며, 점진적인 크레센도(Crescendo)를 활용하여 긴장감을 고조시킵니다.",
+    "educational_feedback": "훌륭한 분석입니다! '빠르게 넘어간다'는 표현 대신 '직접 전조(Direct Modulation)'라는 용어를 사용해 보세요. 또한 피아노가 점점 커지는 것은 음악 용어로 '크레센도(Crescendo)'라고 표현하면 더 전문적으로 보입니다."
+  }
+}
