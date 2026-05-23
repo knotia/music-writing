@@ -32,13 +32,20 @@ async def analyze_musical_thought(
         feedback = get_musical_analysis_feedback(request)
         
         # DB에 분석 이력 저장
+        combined_feedback = feedback.educational_feedback
+        if feedback.grammar_evaluation.has_errors:
+            combined_feedback += "\n\n[문법 및 오타 교정]\n"
+            combined_feedback += f"- {feedback.grammar_evaluation.feedback}\n"
+            for corr in feedback.grammar_evaluation.corrections:
+                combined_feedback += f"- {corr}\n"
+
         new_history = AnalysisHistory(
             user_id=current_user.id,
             raw_sentence=request.raw_sentence,
             error_type=feedback.logic_evaluation.error_type,
             thinking_structure=feedback.thinking_structure,
             translated_sentence=feedback.translated_expert_sentence,
-            educational_feedback=feedback.educational_feedback
+            educational_feedback=combined_feedback
         )
         db.add(new_history)
         db.commit()

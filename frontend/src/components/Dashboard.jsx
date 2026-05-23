@@ -86,6 +86,19 @@ export default function Dashboard() {
                 <div style={{ fontWeight: '500' }}>{feedback.logic_evaluation.error_type === 'none' ? '✅ 오류 없음' : `⚠️ ${feedback.logic_evaluation.error_type}`}</div>
               </div>
             </div>
+
+            {/* 문법 및 오타 교정 섹션 */}
+            {feedback.grammar_evaluation && feedback.grammar_evaluation.has_errors && (
+              <div style={{ padding: '16px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', borderLeft: '4px solid var(--error)' }}>
+                <h4 style={{ margin: '0 0 8px 0', color: 'var(--error)' }}>📝 맞춤법 및 문장 교정</h4>
+                <p style={{ margin: '0 0 8px 0', fontSize: '0.95rem' }}>{feedback.grammar_evaluation.feedback}</p>
+                <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                  {feedback.grammar_evaluation.corrections.map((corr, idx) => (
+                    <li key={idx} style={{ marginBottom: '4px' }}>{corr}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
       )}
