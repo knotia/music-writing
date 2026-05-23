@@ -34,6 +34,9 @@ def get_musical_analysis_feedback(request_data: UserAnalysisRequest) -> ExpertFe
     # 프롬프트 조립
     user_message = ""
     
+    if request_data.assignment_question:
+        user_message += f"--- [과제 논제/질문] ---\n{request_data.assignment_question}\n----------------------\n\n"
+    
     # 이전 대화 기록이 있다면 추가
     if request_data.history:
         user_message += "--- [이전 대화 맥락 (참고용)] ---\n"

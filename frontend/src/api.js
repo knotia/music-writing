@@ -52,22 +52,28 @@ export const getUserMe = async () => {
   return request('/auth/me');
 };
 
-export const analyzeThoughtStream = async (rawSentence, sessionId, history = []) => {
+export const analyzeThoughtStream = async (rawSentence, sessionId, history = [], assignmentQuestion = '') => {
   const token = getToken();
   const headers = {
     'Content-Type': 'application/json',
     ...(token && { Authorization: `Bearer ${token}` })
   };
 
+  const bodyData = {
+    user_id: 'auto',
+    raw_sentence: rawSentence,
+    session_id: sessionId,
+    history: history
+  };
+
+  if (assignmentQuestion.trim()) {
+    bodyData.assignment_question = assignmentQuestion.trim();
+  }
+
   const response = await fetch(`${API_URL}/analyze`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({
-      user_id: 'auto',
-      raw_sentence: rawSentence,
-      session_id: sessionId,
-      history: history
-    })
+    body: JSON.stringify(bodyData)
   });
 
   if (!response.ok) {

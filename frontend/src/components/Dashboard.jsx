@@ -12,6 +12,7 @@ export default function Dashboard() {
   const [chatReply, setChatReply] = useState('');
   const [chatHistory, setChatHistory] = useState([]);
   const [showTranslation, setShowTranslation] = useState(false);
+  const [assignmentQuestion, setAssignmentQuestion] = useState('');
   // 세션 ID 고정 (컴포넌트 단위)
   const [sessionId] = useState(`sess_${Date.now()}`);
 
@@ -99,7 +100,7 @@ export default function Dashboard() {
     setFeedback(null);
     
     try {
-      const response = await analyzeThoughtStream(text, sessionId, []);
+      const response = await analyzeThoughtStream(text, sessionId, [], assignmentQuestion);
       await processStream(response, text);
     } catch (err) {
       setError(err.message);
@@ -121,7 +122,7 @@ export default function Dashboard() {
       
       setText(newText);
       
-      const response = await analyzeThoughtStream(newText, sessionId, chatHistory);
+      const response = await analyzeThoughtStream(newText, sessionId, chatHistory, assignmentQuestion);
       await processStream(response, newText, { role: 'user', content: `[본문에 내용 추가됨] ${chatReply}` });
       
       setChatReply('');
@@ -157,15 +158,35 @@ export default function Dashboard() {
           음악적 구조나 이론을 바탕으로 본인의 생각과 논리를 자유롭고 깊이 있게 작성해 보세요.
         </p>
         
-        <form onSubmit={handleSubmit}>
-          <textarea 
-            className="input-field" 
-            style={{ minHeight: '150px', resize: 'vertical' }}
-            placeholder="예: 이 멜로디는 갑자기 조용해지면서 어두운 분위기를 만듭니다..."
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: 'var(--text-primary)', fontSize: '0.9rem' }}>
+              과제 질문 / 논제 (선택)
+            </label>
+            <input
+              type="text"
+              className="input-field"
+              placeholder="예: 이 곡의 1~4마디 화성 진행에 대해 설명하시오."
+              value={assignmentQuestion}
+              onChange={(e) => setAssignmentQuestion(e.target.value)}
+              style={{ padding: '12px', fontSize: '0.95rem' }}
+            />
+          </div>
+          
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: 'var(--text-primary)', fontSize: '0.9rem' }}>
+              본문 작성
+            </label>
+            <textarea 
+              className="input-field" 
+              style={{ minHeight: '150px', resize: 'vertical' }}
+              placeholder="예: 이 멜로디는 갑자기 조용해지면서 어두운 분위기를 만듭니다..."
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+            />
+          </div>
+          
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
             <button type="submit" className="btn" style={{ display: 'flex', alignItems: 'center', gap: '8px' }} disabled={loading || !text.trim()}>
               <Send size={18} />
               {loading ? '분석 중...' : '전문가 분석 받기'}
