@@ -38,6 +38,8 @@ async def analyze_musical_thought(
             combined_feedback += f"- {feedback.grammar_evaluation.feedback}\n"
             for corr in feedback.grammar_evaluation.corrections:
                 combined_feedback += f"- {corr}\n"
+        
+        combined_feedback += f"\n\n[꼬리 질문]\n{feedback.guiding_question}"
 
         new_history = AnalysisHistory(
             user_id=current_user.id,

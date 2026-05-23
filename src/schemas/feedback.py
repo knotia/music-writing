@@ -36,3 +36,4 @@ class ExpertFeedback(BaseModel):
     grammar_evaluation: GrammarEvaluation = Field(..., description="오타 및 문법 교정 결과")
     translated_expert_sentence: str = Field(..., description="전문가 수준의 용어로 번역된 최종 분석 문장")
     educational_feedback: str = Field(..., description="사용자의 학습을 돕기 위해 제공되는 칭찬 및 보완 지점 안내")
+    guiding_question: str = Field(..., description="학생이 스스로 더 깊이 생각하고 글을 발전시킬 수 있도록 유도하는 소크라테스식 꼬리 질문")

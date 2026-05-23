@@ -65,6 +65,21 @@ export default function Dashboard() {
           </h2>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '24px' }}>
+            {/* 소크라테스식 꼬리 질문 (가장 먼저 노출되어 생각 유도) */}
+            {feedback.guiding_question && (
+              <div style={{ padding: '20px', background: 'var(--primary)', color: 'white', borderRadius: '12px', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)' }}>
+                <h3 style={{ margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  🤔 한 걸음 더 나아가 볼까요?
+                </h3>
+                <p style={{ margin: 0, fontSize: '1.1rem', lineHeight: '1.6', fontWeight: '500' }}>
+                  {feedback.guiding_question}
+                </p>
+                <div style={{ marginTop: '16px', fontSize: '0.9rem', opacity: 0.9 }}>
+                  위 질문에 대한 답을 떠올려보고, 위의 글쓰기 칸에 내용을 덧붙여 다시 분석을 받아보세요!
+                </div>
+              </div>
+            )}
+
             <div style={{ padding: '16px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', borderLeft: '4px solid var(--primary)' }}>
               <h4 style={{ margin: '0 0 8px 0', color: 'var(--text-primary)' }}>전문가 수준 번역</h4>
               <p style={{ margin: 0, lineHeight: '1.6' }}>{feedback.translated_expert_sentence}</p>
