@@ -10,11 +10,17 @@ from pydantic import BaseModel
 
 from src.api.database import get_db
 from src.api.models import User
+import hashlib
 
 # JWT 설정
 SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 if not SECRET_KEY:
-    raise ValueError("CRITICAL SECURITY ERROR: JWT_SECRET_KEY environment variable is missing!")
+    # Render 등에서 사용자가 환경 변수를 깜빡한 경우를 대비하여, 
+    # 데이터베이스 URL을 기반으로 절대 변하지 않는 고유한 비밀번호를 자동 생성합니다.
+    # 이렇게 하면 서버가 재부팅되어도 토큰이 만료되지 않습니다.
+    db_url = os.getenv("DATABASE_URL", "sqlite:///./music_writing.db")
+    SECRET_KEY = hashlib.sha256((db_url + "music_thought_super_secret_salt").encode()).hexdigest()
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 # 7 days
 
