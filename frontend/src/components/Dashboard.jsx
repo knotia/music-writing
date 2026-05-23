@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { analyzeThought } from '../api';
+import { analyzeThoughtStream } from '../api';
 import { Send, Music, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function Dashboard() {
@@ -15,6 +15,81 @@ export default function Dashboard() {
   // 세션 ID 고정 (컴포넌트 단위)
   const [sessionId] = useState(`sess_${Date.now()}`);
 
+  const parseStreamingMarkdown = (text) => {
+    const feedbackObj = {
+      guiding_question: '',
+      marked_sentence: '',
+      musical_writing_tip: '',
+      translated_expert_sentence: '',
+      evaluations: []
+    };
+    
+    const extractSection = (header) => {
+      const regex = new RegExp(`^#\\s*${header}\\s*\\n([\\s\\S]*?)(?=\\n#|$)`, 'im');
+      const match = text.match(regex);
+      return match ? match[1].trim() : '';
+    };
+
+    feedbackObj.guiding_question = extractSection('guiding_question');
+    feedbackObj.marked_sentence = extractSection('marked_sentence');
+    feedbackObj.musical_writing_tip = extractSection('tip');
+    feedbackObj.translated_expert_sentence = extractSection('translation');
+    
+    const evalsText = extractSection('evaluations');
+    if (evalsText) {
+      const evalLines = evalsText.split('\n').filter(line => line.trim().startsWith('-'));
+      feedbackObj.evaluations = evalLines.map(line => {
+        const match = line.match(/-\s*\*\*(.*?)(?:\s*\((\d)\/5\))?\*\*\s*:\s*(.*)/);
+        if (match) {
+          return {
+            category: match[1].trim(),
+            score: parseInt(match[2]) || 3,
+            problem_and_advice: match[3].trim()
+          };
+        }
+        return { category: '분석 중...', score: 0, problem_and_advice: line.replace(/^-/, '').replace(/\*\*/g, '').trim() };
+      });
+    }
+    
+    return feedbackObj;
+  };
+
+  const processStream = async (response, originalText, newHistoryItem = null) => {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    let fullText = "";
+    
+    // 빈 피드백 객체로 초기화하여 UI 즉시 노출
+    setFeedback({
+      guiding_question: '생각 중...',
+      marked_sentence: '',
+      musical_writing_tip: '',
+      translated_expert_sentence: '',
+      evaluations: []
+    });
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      fullText += decoder.decode(value, { stream: true });
+      setFeedback(parseStreamingMarkdown(fullText));
+    }
+    
+    const finalFeedback = parseStreamingMarkdown(fullText);
+    if (newHistoryItem) {
+      setChatHistory(prev => [
+        ...prev,
+        { role: 'assistant', content: finalFeedback.guiding_question },
+        newHistoryItem
+      ]);
+    } else {
+      setChatHistory([
+        { role: 'user', content: originalText },
+        { role: 'assistant', content: finalFeedback.guiding_question }
+      ]);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!text.trim()) return;
@@ -24,12 +99,8 @@ export default function Dashboard() {
     setFeedback(null);
     
     try {
-      const result = await analyzeThought(text, sessionId, []);
-      setFeedback(result);
-      setChatHistory([
-        { role: 'user', content: text },
-        { role: 'assistant', content: result.guiding_question }
-      ]);
+      const response = await analyzeThoughtStream(text, sessionId, []);
+      await processStream(response, text);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -45,24 +116,14 @@ export default function Dashboard() {
     setError('');
     
     try {
-      // 꼬리 질문에 대한 답을 기존 본문에 자연스럽게 덧붙임
       const separator = text.trim().endsWith('.') ? ' ' : '. ';
       const newText = text.trim() + separator + chatReply.trim();
       
-      // 본문 textarea 업데이트 (사용자가 자신의 글이 확장되는 것을 볼 수 있게 함)
       setText(newText);
       
-      // 확장된 '전체 본문'을 분석으로 보냄
-      const result = await analyzeThought(newText, sessionId, chatHistory);
+      const response = await analyzeThoughtStream(newText, sessionId, chatHistory);
+      await processStream(response, newText, { role: 'user', content: `[본문에 내용 추가됨] ${chatReply}` });
       
-      setFeedback(result);
-      
-      // 히스토리에는 AI가 했던 질문과 유저가 방금 덧붙인 내용을 기록
-      setChatHistory(prev => [
-        ...prev,
-        { role: 'assistant', content: feedback.guiding_question },
-        { role: 'user', content: `[본문에 내용 추가됨] ${chatReply}` }
-      ]);
       setChatReply('');
     } catch (err) {
       setError(err.message);

@@ -52,9 +52,16 @@ export const getUserMe = async () => {
   return request('/auth/me');
 };
 
-export const analyzeThought = async (rawSentence, sessionId, history = []) => {
-  return request('/analyze', {
+export const analyzeThoughtStream = async (rawSentence, sessionId, history = []) => {
+  const token = getToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` })
+  };
+
+  const response = await fetch(`${API_URL}/analyze`, {
     method: 'POST',
+    headers,
     body: JSON.stringify({
       user_id: 'auto',
       raw_sentence: rawSentence,
@@ -62,6 +69,15 @@ export const analyzeThought = async (rawSentence, sessionId, history = []) => {
       history: history
     })
   });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    const detail = errorData.detail;
+    const errorMessage = typeof detail === 'string' ? detail : JSON.stringify(detail || 'API request failed');
+    throw new Error(errorMessage);
+  }
+
+  return response;
 };
 
 export const getProgress = async () => {
