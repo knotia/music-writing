@@ -45,17 +45,23 @@ export default function Dashboard() {
     setError('');
     
     try {
-      // API 전송 시 현재 입력값을 raw_sentence로 보냄
-      const result = await analyzeThought(chatReply, sessionId, chatHistory);
+      // 꼬리 질문에 대한 답을 기존 본문에 자연스럽게 덧붙임
+      const separator = text.trim().endsWith('.') ? ' ' : '. ';
+      const newText = text.trim() + separator + chatReply.trim();
       
-      // 피드백 패널 전체 업데이트 (점수 등 실시간 갱신)
+      // 본문 textarea 업데이트 (사용자가 자신의 글이 확장되는 것을 볼 수 있게 함)
+      setText(newText);
+      
+      // 확장된 '전체 본문'을 분석으로 보냄
+      const result = await analyzeThought(newText, sessionId, chatHistory);
+      
       setFeedback(result);
       
-      // 히스토리에 방금 보낸 답과 새 꼬리질문 추가
+      // 히스토리에는 AI가 했던 질문과 유저가 방금 덧붙인 내용을 기록
       setChatHistory(prev => [
         ...prev,
-        { role: 'user', content: chatReply },
-        { role: 'assistant', content: result.guiding_question }
+        { role: 'assistant', content: feedback.guiding_question },
+        { role: 'user', content: `[본문에 내용 추가됨] ${chatReply}` }
       ]);
       setChatReply('');
     } catch (err) {

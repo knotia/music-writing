@@ -36,18 +36,18 @@ def get_musical_analysis_feedback(request_data: UserAnalysisRequest) -> ExpertFe
     
     # 이전 대화 기록이 있다면 추가
     if request_data.history:
-        user_message += "--- [이전 대화 맥락] ---\n"
+        user_message += "--- [이전 대화 맥락 (참고용)] ---\n"
         for msg in request_data.history:
             role = "학생" if msg.get("role") == "user" else "AI 튜터"
             user_message += f"{role}: {msg.get('content')}\n"
         user_message += "----------------------\n\n"
         
-    user_message += f"이번에 학생이 새로 입력한 답변/문장: {request_data.raw_sentence}\n\n"
+    user_message += f"학생이 현재까지 작성한 전체 글(원문+추가된 답변): {request_data.raw_sentence}\n\n"
     
     if request_data.extracted_elements:
         user_message += f"1차 추출 요소 참고: {request_data.extracted_elements.model_dump_json()}\n"
     
-    user_message += "\n위 대화 맥락과 새로운 문장을 종합적으로 분석하고, 항목별 점수 평가, 작문 첨삭, 꼬리 질문 등을 생성해주세요."
+    user_message += "\n위 대화 맥락을 참고하되, 반드시 '현재까지 작성한 전체 글' 전체를 대상으로 분석하여 종합 평가 점수, 전체 글에 대한 작문 첨삭 원문, 그리고 다음 단계로 나아갈 새로운 꼬리 질문을 생성해주세요."
 
     response = client.models.generate_content(
         model='gemini-2.5-flash',
