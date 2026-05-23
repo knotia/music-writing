@@ -15,25 +15,21 @@ class ThinkingStructureType(str, Enum):
     CONTRASTIVE = "contrastive" # 대조적
     INTEGRATIVE = "integrative" # 융합적
 
-class LogicEvaluation(BaseModel):
-    """전문가 관점의 논리성 및 정확성 평가"""
-    is_accurate: bool = Field(..., description="이론적 정확성 여부")
-    error_type: ErrorType = Field(default=ErrorType.NONE, description="발견된 오류 유형")
-    rationale: str = Field(..., description="정확성 평가에 대한 비판적이고 구체적인 이유 설명 (단순 칭찬 배제)")
-
-class GrammarEvaluation(BaseModel):
-    """국어 문법, 오타 및 전반적인 작문 능력 분석 결과"""
-    has_errors: bool = Field(..., description="오타, 비문, 어색한 문장 구조 등 작문 오류 존재 여부")
-    marked_sentence: str = Field(..., description="사용자의 원문을 바탕으로 틀린 부분은 ~~틀린부분~~ 으로, 고친 부분은 **고친부분** 으로 직접 마크업하여 첨삭한 전체 문장 (오류가 없으면 원문 그대로 반환)")
-    feedback: str = Field(..., description="단순한 문법 지적을 넘어, 글의 응집력과 문장력 등 전반적인 작문 능력을 향상시키기 위한 매우 상세하고 예리한 조언")
+class EvaluationItem(BaseModel):
+    """종합 평가 항목 (음악적 타당성, 작문 및 문장력, 논리적 전개 등)"""
+    category: str = Field(..., description="평가 항목 이름 (예: '음악적 타당성', '작문 및 문장력', '논리적 전개')")
+    score: int = Field(..., description="1점부터 5점까지의 별점 점수 (1: 매우 부족, 5: 매우 우수)")
+    problem_and_advice: str = Field(..., description="해당 항목에서 발견된 구체적인 문제점 및 오류 지적, 그리고 개선을 위한 팁")
 
 class ExpertFeedback(BaseModel):
-    """최종 생성된 AI 및 전문가 피드백 데이터 모델"""
+    """최종 생성된 대화형 AI 피드백 데이터 모델"""
     feedback_id: str = Field(..., description="피드백 고유 식별자")
     user_session_id: str = Field(..., description="매칭되는 사용자의 분석 세션 ID")
     thinking_structure: ThinkingStructureType = Field(..., description="분류된 사용자의 사고 흐름 방식")
-    logic_evaluation: LogicEvaluation = Field(..., description="논리성 및 정확성 평가 결과")
-    grammar_evaluation: GrammarEvaluation = Field(..., description="오타 및 문법 교정 결과")
+    
+    guiding_question: str = Field(..., description="학생이 스스로 더 깊이 생각하고 글을 발전시킬 수 있도록 유도하는 소크라테스식 꼬리 질문 (대화 유도용)")
+    marked_sentence: str = Field(..., description="사용자의 원문을 바탕으로 틀린 부분은 ~~틀린부분~~ 으로, 고친 부분은 **고친부분** 으로 마크업하여 직접 첨삭한 문장 (오류가 없으면 원문 그대로 반환)")
+    
+    evaluations: List[EvaluationItem] = Field(..., description="음악적 타당성, 작문 및 문장력, 논리적 전개 등 항목별 점수와 구체적인 문제점 지적 목록")
+    musical_writing_tip: str = Field(..., description="전반적인 음악적 글쓰기 능력을 향상시키기 위한 총평 및 글쓰기 Tip")
     translated_expert_sentence: str = Field(..., description="전문가 수준의 용어로 번역된 최종 분석 문장")
-    educational_feedback: str = Field(..., description="사용자의 학습을 돕기 위해 제공되는 칭찬 및 보완 지점 안내")
-    guiding_question: str = Field(..., description="학생이 스스로 더 깊이 생각하고 글을 발전시킬 수 있도록 유도하는 소크라테스식 꼬리 질문")

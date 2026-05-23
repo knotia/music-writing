@@ -32,18 +32,17 @@ async def analyze_musical_thought(
         feedback = get_musical_analysis_feedback(request)
         
         # DB에 분석 이력 저장
-        combined_feedback = feedback.educational_feedback
-        if feedback.grammar_evaluation.has_errors:
-            combined_feedback += "\n\n[작문 및 문장력 교정]\n"
-            combined_feedback += f"- {feedback.grammar_evaluation.feedback}\n"
-            combined_feedback += f"\n[첨삭 원문]\n{feedback.grammar_evaluation.marked_sentence}\n"
-        
-        combined_feedback += f"\n\n[꼬리 질문]\n{feedback.guiding_question}"
+        combined_feedback = f"[음악적 글쓰기 Tip]\n{feedback.musical_writing_tip}\n\n[종합 평가]\n"
+        for eval_item in feedback.evaluations:
+            combined_feedback += f"- {eval_item.category} ({eval_item.score}/5점): {eval_item.problem_and_advice}\n"
+            
+        combined_feedback += f"\n[첨삭 원문]\n{feedback.marked_sentence}\n"
+        combined_feedback += f"\n[꼬리 질문]\n{feedback.guiding_question}"
 
         new_history = AnalysisHistory(
             user_id=current_user.id,
             raw_sentence=request.raw_sentence,
-            error_type=feedback.logic_evaluation.error_type,
+            error_type="none", # 이제 통합 평가로 바뀌었으므로 임의 처리 (필요시 DB 모델 수정 권장)
             thinking_structure=feedback.thinking_structure,
             translated_sentence=feedback.translated_expert_sentence,
             educational_feedback=combined_feedback

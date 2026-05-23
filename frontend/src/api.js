@@ -50,13 +50,13 @@ export const getUserMe = async () => {
   return request('/auth/me');
 };
 
-export const analyzeThought = async (raw_sentence, session_id) => {
+export const analyzeThought = async (rawSentence, sessionId, history = []) => {
   return request('/analyze', {
     method: 'POST',
     body: JSON.stringify({
-      user_id: 'auto',
-      session_id,
-      raw_sentence
+      raw_sentence: rawSentence,
+      session_id: sessionId,
+      history: history
     })
   });
 };

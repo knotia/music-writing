@@ -14,5 +14,6 @@ class UserAnalysisRequest(BaseModel):
     user_id: str = Field(..., description="사용자 고유 식별자")
     session_id: str = Field(..., description="분석 세션 ID")
     raw_sentence: str = Field(..., description="사용자가 작성한 자연어 분석 문장")
+    history: Optional[List[dict]] = Field(None, description="대화형 진행 시 이전 꼬리 질문 및 답변 기록")
     target_music_id: Optional[str] = Field(None, description="분석 대상이 되는 곡의 ID (있는 경우)")
     extracted_elements: Optional[ThinkingElements] = Field(None, description="AI 모델에 의해 1차적으로 추출된 사고 요소들")

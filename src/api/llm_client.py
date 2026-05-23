@@ -32,11 +32,22 @@ def get_musical_analysis_feedback(request_data: UserAnalysisRequest) -> ExpertFe
         raise ValueError("GEMINI_API_KEY 환경 변수가 설정되지 않았습니다. .env 파일을 확인하세요.")
 
     # 프롬프트 조립
-    user_message = f"사용자의 문장: {request_data.raw_sentence}\n\n"
+    user_message = ""
+    
+    # 이전 대화 기록이 있다면 추가
+    if request_data.history:
+        user_message += "--- [이전 대화 맥락] ---\n"
+        for msg in request_data.history:
+            role = "학생" if msg.get("role") == "user" else "AI 튜터"
+            user_message += f"{role}: {msg.get('content')}\n"
+        user_message += "----------------------\n\n"
+        
+    user_message += f"이번에 학생이 새로 입력한 답변/문장: {request_data.raw_sentence}\n\n"
+    
     if request_data.extracted_elements:
         user_message += f"1차 추출 요소 참고: {request_data.extracted_elements.model_dump_json()}\n"
     
-    user_message += "\n위 문장을 분석하고 논리성 평가, 사고 구조, 전문가 수준 번역, 그리고 교육적 피드백을 생성해주세요."
+    user_message += "\n위 대화 맥락과 새로운 문장을 종합적으로 분석하고, 항목별 점수 평가, 작문 첨삭, 꼬리 질문 등을 생성해주세요."
 
     response = client.models.generate_content(
         model='gemini-2.5-flash',

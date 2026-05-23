@@ -7,6 +7,13 @@ export default function Dashboard() {
   const [feedback, setFeedback] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // 대화형 꼬리질문 관련 상태
+  const [chatReply, setChatReply] = useState('');
+  const [chatHistory, setChatHistory] = useState([]);
+  const [showTranslation, setShowTranslation] = useState(false);
+  // 세션 ID 고정 (컴포넌트 단위)
+  const [sessionId] = useState(`sess_${Date.now()}`);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,10 +24,40 @@ export default function Dashboard() {
     setFeedback(null);
     
     try {
-      // session_id is auto generated per component mount for simplicity, or just a timestamp
-      const sessionId = `sess_${Date.now()}`;
-      const result = await analyzeThought(text, sessionId);
+      const result = await analyzeThought(text, sessionId, []);
       setFeedback(result);
+      setChatHistory([
+        { role: 'user', content: text },
+        { role: 'assistant', content: result.guiding_question }
+      ]);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChatSubmit = async (e) => {
+    e.preventDefault();
+    if (!chatReply.trim()) return;
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      // API 전송 시 현재 입력값을 raw_sentence로 보냄
+      const result = await analyzeThought(chatReply, sessionId, chatHistory);
+      
+      // 피드백 패널 전체 업데이트 (점수 등 실시간 갱신)
+      setFeedback(result);
+      
+      // 히스토리에 방금 보낸 답과 새 꼬리질문 추가
+      setChatHistory(prev => [
+        ...prev,
+        { role: 'user', content: chatReply },
+        { role: 'assistant', content: result.guiding_question }
+      ]);
+      setChatReply('');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -79,53 +116,84 @@ export default function Dashboard() {
           </h2>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '24px' }}>
-            {/* 소크라테스식 꼬리 질문 (가장 먼저 노출되어 생각 유도) */}
+            
+            {/* 1. 소크라테스식 꼬리 질문 (대화형) */}
             {feedback.guiding_question && (
               <div style={{ padding: '20px', background: 'var(--primary)', color: 'white', borderRadius: '12px', boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)' }}>
                 <h3 style={{ margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   🤔 한 걸음 더 나아가 볼까요?
                 </h3>
-                <p style={{ margin: 0, fontSize: '1.1rem', lineHeight: '1.6', fontWeight: '500' }}>
+                <p style={{ margin: 0, fontSize: '1.1rem', lineHeight: '1.6', fontWeight: '500', marginBottom: '16px' }}>
                   {feedback.guiding_question}
                 </p>
-                <div style={{ marginTop: '16px', fontSize: '0.9rem', opacity: 0.9 }}>
-                  위 질문에 대한 답을 떠올려보고, 위의 글쓰기 칸에 내용을 덧붙여 다시 분석을 받아보세요!
-                </div>
+                <form onSubmit={handleChatSubmit} style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="text"
+                    value={chatReply}
+                    onChange={(e) => setChatReply(e.target.value)}
+                    placeholder="위 질문에 대한 답을 자유롭게 적어보세요..."
+                    style={{ flex: 1, padding: '12px', borderRadius: '8px', border: 'none', fontSize: '1rem' }}
+                    disabled={loading}
+                  />
+                  <button type="submit" disabled={loading || !chatReply.trim()} style={{ padding: '0 20px', background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '8px', color: 'white', cursor: 'pointer', fontWeight: 'bold' }}>
+                    {loading ? '...' : '답변하기'}
+                  </button>
+                </form>
               </div>
             )}
 
-            <div style={{ padding: '16px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '8px', borderLeft: '4px solid var(--primary)' }}>
-              <h4 style={{ margin: '0 0 8px 0', color: 'var(--text-primary)' }}>전문가 수준 번역</h4>
-              <p style={{ margin: 0, lineHeight: '1.6' }}>{feedback.translated_expert_sentence}</p>
-            </div>
-            
-            <div style={{ padding: '16px', background: 'rgba(139, 92, 246, 0.1)', borderRadius: '8px', borderLeft: '4px solid var(--accent)' }}>
-              <h4 style={{ margin: '0 0 8px 0', color: 'var(--text-primary)' }}>교육적 조언</h4>
-              <p style={{ margin: 0, lineHeight: '1.6' }}>{feedback.educational_feedback}</p>
-            </div>
-
-            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-              <div style={{ flex: 1, minWidth: '200px', padding: '16px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '8px' }}>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>논리성 평가</div>
-                <div style={{ fontWeight: '500' }}>{feedback.logic_evaluation.is_accurate ? '🟢 타당함' : '🔴 보완 필요'}</div>
-                <div style={{ fontSize: '0.9rem', marginTop: '8px', color: 'var(--text-secondary)' }}>{feedback.logic_evaluation.rationale}</div>
-              </div>
-              <div style={{ flex: 1, minWidth: '200px', padding: '16px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '8px' }}>
-                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>발견된 오류 유형</div>
-                <div style={{ fontWeight: '500' }}>{feedback.logic_evaluation.error_type === 'none' ? '✅ 오류 없음' : `⚠️ ${feedback.logic_evaluation.error_type}`}</div>
-              </div>
-            </div>
-
-            {/* 작문 및 문장 교정 섹션 */}
-            {feedback.grammar_evaluation && feedback.grammar_evaluation.has_errors && (
+            {/* 2. 작문 및 문장 교정 섹션 */}
+            {feedback.marked_sentence && (
               <div style={{ padding: '16px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', borderLeft: '4px solid var(--error)' }}>
-                <h4 style={{ margin: '0 0 8px 0', color: 'var(--error)' }}>📝 작문 및 문장력 교정</h4>
-                <p style={{ margin: '0 0 16px 0', fontSize: '0.95rem' }}>{feedback.grammar_evaluation.feedback}</p>
+                <h4 style={{ margin: '0 0 12px 0', color: 'var(--error)' }}>📝 작문 및 문장력 교정</h4>
                 <div style={{ padding: '16px', background: 'rgba(255,255,255,0.6)', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)', fontSize: '1rem', lineHeight: '1.8' }}>
-                  {renderMarkedText(feedback.grammar_evaluation.marked_sentence)}
+                  {renderMarkedText(feedback.marked_sentence)}
                 </div>
               </div>
             )}
+
+            {/* 3. 음악적 글쓰기 Tip */}
+            {feedback.musical_writing_tip && (
+              <div style={{ padding: '16px', background: 'rgba(139, 92, 246, 0.1)', borderRadius: '8px', borderLeft: '4px solid var(--accent)' }}>
+                <h4 style={{ margin: '0 0 8px 0', color: 'var(--text-primary)' }}>💡 음악적 글쓰기 Tip</h4>
+                <p style={{ margin: 0, lineHeight: '1.6' }}>{feedback.musical_writing_tip}</p>
+              </div>
+            )}
+
+            {/* 4. 종합 평가 점수표 */}
+            {feedback.evaluations && feedback.evaluations.length > 0 && (
+              <div style={{ padding: '16px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <h4 style={{ margin: '0 0 16px 0', color: 'var(--text-primary)' }}>📊 종합 평가</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {feedback.evaluations.map((ev, idx) => (
+                    <div key={idx} style={{ padding: '12px', background: 'rgba(0,0,0,0.1)', borderRadius: '6px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <strong style={{ color: 'var(--primary)' }}>{ev.category}</strong>
+                        <div style={{ color: '#fbbf24', letterSpacing: '2px', fontSize: '1.1rem' }}>
+                          {'★'.repeat(ev.score)}{'☆'.repeat(5 - ev.score)}
+                        </div>
+                      </div>
+                      <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                        {ev.problem_and_advice}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 5. 전문가 수준 번역 (클릭 시 노출) */}
+            {feedback.translated_expert_sentence && (
+              <details style={{ background: 'rgba(59, 130, 246, 0.05)', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
+                <summary style={{ padding: '16px', cursor: 'pointer', fontWeight: 'bold', color: 'var(--primary)' }}>
+                  🌐 전문가 수준 번역 보기 (Click!)
+                </summary>
+                <div style={{ padding: '0 16px 16px 16px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+                  {feedback.translated_expert_sentence}
+                </div>
+              </details>
+            )}
+            
           </div>
         </div>
       )}
