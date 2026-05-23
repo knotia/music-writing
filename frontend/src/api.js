@@ -16,7 +16,9 @@ const request = async (endpoint, options = {}) => {
   
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.detail || 'API request failed');
+    const detail = errorData.detail;
+    const errorMessage = typeof detail === 'string' ? detail : JSON.stringify(detail || 'API request failed');
+    throw new Error(errorMessage);
   }
   return response.json();
 };
@@ -54,6 +56,7 @@ export const analyzeThought = async (rawSentence, sessionId, history = []) => {
   return request('/analyze', {
     method: 'POST',
     body: JSON.stringify({
+      user_id: 'auto',
       raw_sentence: rawSentence,
       session_id: sessionId,
       history: history
