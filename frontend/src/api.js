@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8000/api/v1';
+const API_URL = 'https://music-thought-api.onrender.com/api/v1';
 
 export const setToken = (token) => localStorage.setItem('token', token);
 export const getToken = () => localStorage.getItem('token');
