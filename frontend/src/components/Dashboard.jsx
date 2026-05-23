@@ -13,6 +13,7 @@ export default function Dashboard() {
   const [chatHistory, setChatHistory] = useState([]);
   const [showTranslation, setShowTranslation] = useState(false);
   const [assignmentQuestion, setAssignmentQuestion] = useState('');
+  const [writingStyle, setWritingStyle] = useState('academic');
   // 세션 ID 고정 (컴포넌트 단위)
   const [sessionId] = useState(`sess_${Date.now()}`);
 
@@ -100,7 +101,7 @@ export default function Dashboard() {
     setFeedback(null);
     
     try {
-      const response = await analyzeThoughtStream(text, sessionId, [], assignmentQuestion);
+      const response = await analyzeThoughtStream(text, sessionId, [], assignmentQuestion, writingStyle);
       await processStream(response, text);
     } catch (err) {
       setError(err.message);
@@ -122,7 +123,7 @@ export default function Dashboard() {
       
       setText(newText);
       
-      const response = await analyzeThoughtStream(newText, sessionId, chatHistory, assignmentQuestion);
+      const response = await analyzeThoughtStream(newText, sessionId, chatHistory, assignmentQuestion, writingStyle);
       await processStream(response, newText, { role: 'user', content: `[본문에 내용 추가됨] ${chatReply}` });
       
       setChatReply('');
@@ -171,6 +172,37 @@ export default function Dashboard() {
               onChange={(e) => setAssignmentQuestion(e.target.value)}
               style={{ padding: '12px', fontSize: '0.95rem' }}
             />
+          </div>
+          
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', color: 'var(--text-primary)', fontSize: '0.9rem' }}>
+              목표 문체 (어조)
+            </label>
+            <div style={{ display: 'flex', gap: '16px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                <input 
+                  type="radio" 
+                  name="writingStyle" 
+                  value="academic" 
+                  checked={writingStyle === 'academic'} 
+                  onChange={(e) => setWritingStyle(e.target.value)} 
+                />
+                🎓 학술적 (논문/리포트)
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '0.9rem' }}>
+                <input 
+                  type="radio" 
+                  name="writingStyle" 
+                  value="general" 
+                  checked={writingStyle === 'general'} 
+                  onChange={(e) => setWritingStyle(e.target.value)} 
+                />
+                📝 일반적 (에세이/리뷰)
+              </label>
+            </div>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '8px' }}>
+              * 학술적 문체를 선택하면 "저는 ~라고 생각합니다" 같은 주관적인 표현을 엄격하게 감점하고 교정해 줍니다.
+            </p>
           </div>
           
           <div>

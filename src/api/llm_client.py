@@ -34,6 +34,9 @@ def get_musical_analysis_feedback(request_data: UserAnalysisRequest) -> ExpertFe
     # 프롬프트 조립
     user_message = ""
     
+    style_label = "학술적 (Academic)" if request_data.writing_style == "academic" else "일반적 (General)"
+    user_message += f"--- [목표 문체] ---\n{style_label}\n----------------------\n\n"
+    
     if request_data.assignment_question:
         user_message += f"--- [과제 논제/질문] ---\n{request_data.assignment_question}\n----------------------\n\n"
     
