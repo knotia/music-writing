@@ -51,7 +51,15 @@ async def analyze_musical_thought(
             except Exception as e:
                 print(f"DB Save Error after stream: {e}")
 
-        return StreamingResponse(stream_generator(), media_type="text/event-stream")
+        return StreamingResponse(
+            stream_generator(), 
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no"
+            }
+        )
     except Exception as e:
         print(f"Error initializing stream: {e}")
         raise HTTPException(status_code=500, detail="처리 중 오류가 발생했습니다.")

@@ -50,7 +50,7 @@ def get_musical_analysis_feedback(request_data: UserAnalysisRequest) -> ExpertFe
     user_message += "\n위 대화 맥락을 참고하되, 반드시 '현재까지 작성한 전체 글' 전체를 대상으로 분석하여 종합 평가 점수, 전체 글에 대한 작문 첨삭 원문, 그리고 다음 단계로 나아갈 새로운 꼬리 질문을 생성해주세요."
 
     response = client.models.generate_content_stream(
-        model='gemini-2.5-pro',
+        model='gemini-2.5-flash',
         contents=user_message,
         config=types.GenerateContentConfig(
             system_instruction=SYSTEM_PROMPT,
