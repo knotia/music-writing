@@ -28,6 +28,20 @@ export default function Dashboard() {
     }
   };
 
+  const renderMarkedText = (text) => {
+    if (!text) return null;
+    const parts = text.split(/(~~.*?~~|\*\*.*?\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('~~') && part.endsWith('~~')) {
+        return <del key={i} style={{ color: '#ef4444', textDecoration: 'line-through', marginRight: '4px', background: 'rgba(239, 68, 68, 0.1)', padding: '0 2px', borderRadius: '4px' }}>{part.slice(2, -2)}</del>;
+      }
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i} style={{ color: '#10b981', fontWeight: 'bold', background: 'rgba(16, 185, 129, 0.1)', padding: '0 2px', borderRadius: '4px' }}>{part.slice(2, -2)}</strong>;
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       <div className="glass-card">
@@ -106,12 +120,10 @@ export default function Dashboard() {
             {feedback.grammar_evaluation && feedback.grammar_evaluation.has_errors && (
               <div style={{ padding: '16px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', borderLeft: '4px solid var(--error)' }}>
                 <h4 style={{ margin: '0 0 8px 0', color: 'var(--error)' }}>📝 작문 및 문장력 교정</h4>
-                <p style={{ margin: '0 0 8px 0', fontSize: '0.95rem' }}>{feedback.grammar_evaluation.feedback}</p>
-                <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                  {feedback.grammar_evaluation.corrections.map((corr, idx) => (
-                    <li key={idx} style={{ marginBottom: '4px' }}>{corr}</li>
-                  ))}
-                </ul>
+                <p style={{ margin: '0 0 16px 0', fontSize: '0.95rem' }}>{feedback.grammar_evaluation.feedback}</p>
+                <div style={{ padding: '16px', background: 'rgba(255,255,255,0.6)', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.2)', fontSize: '1rem', lineHeight: '1.8' }}>
+                  {renderMarkedText(feedback.grammar_evaluation.marked_sentence)}
+                </div>
               </div>
             )}
           </div>

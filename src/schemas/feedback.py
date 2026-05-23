@@ -24,7 +24,7 @@ class LogicEvaluation(BaseModel):
 class GrammarEvaluation(BaseModel):
     """국어 문법, 오타 및 전반적인 작문 능력 분석 결과"""
     has_errors: bool = Field(..., description="오타, 비문, 어색한 문장 구조 등 작문 오류 존재 여부")
-    corrections: List[str] = Field(..., description="문장 구조 개선, 어휘력 확장, 오타 교정 등을 위한 구체적인 대안 문장 목록")
+    marked_sentence: str = Field(..., description="사용자의 원문을 바탕으로 틀린 부분은 ~~틀린부분~~ 으로, 고친 부분은 **고친부분** 으로 직접 마크업하여 첨삭한 전체 문장 (오류가 없으면 원문 그대로 반환)")
     feedback: str = Field(..., description="단순한 문법 지적을 넘어, 글의 응집력과 문장력 등 전반적인 작문 능력을 향상시키기 위한 매우 상세하고 예리한 조언")
 
 class ExpertFeedback(BaseModel):

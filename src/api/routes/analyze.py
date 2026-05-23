@@ -36,8 +36,7 @@ async def analyze_musical_thought(
         if feedback.grammar_evaluation.has_errors:
             combined_feedback += "\n\n[작문 및 문장력 교정]\n"
             combined_feedback += f"- {feedback.grammar_evaluation.feedback}\n"
-            for corr in feedback.grammar_evaluation.corrections:
-                combined_feedback += f"- {corr}\n"
+            combined_feedback += f"\n[첨삭 원문]\n{feedback.grammar_evaluation.marked_sentence}\n"
         
         combined_feedback += f"\n\n[꼬리 질문]\n{feedback.guiding_question}"
 
