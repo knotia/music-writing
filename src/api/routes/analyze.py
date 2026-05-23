@@ -34,7 +34,7 @@ async def analyze_musical_thought(
         # DB에 분석 이력 저장
         combined_feedback = feedback.educational_feedback
         if feedback.grammar_evaluation.has_errors:
-            combined_feedback += "\n\n[문법 및 오타 교정]\n"
+            combined_feedback += "\n\n[작문 및 문장력 교정]\n"
             combined_feedback += f"- {feedback.grammar_evaluation.feedback}\n"
             for corr in feedback.grammar_evaluation.corrections:
                 combined_feedback += f"- {corr}\n"

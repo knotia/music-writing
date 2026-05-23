@@ -22,10 +22,10 @@ class LogicEvaluation(BaseModel):
     rationale: str = Field(..., description="정확성 평가에 대한 비판적이고 구체적인 이유 설명 (단순 칭찬 배제)")
 
 class GrammarEvaluation(BaseModel):
-    """국어 문법 및 오타 분석 결과"""
-    has_errors: bool = Field(..., description="오타 또는 문법 오류 존재 여부")
-    corrections: List[str] = Field(..., description="구체적인 오타 및 문법 교정 내용 목록 (오류가 없으면 빈 배열)")
-    feedback: str = Field(..., description="전반적인 문장력 및 표현 개선을 위한 조언")
+    """국어 문법, 오타 및 전반적인 작문 능력 분석 결과"""
+    has_errors: bool = Field(..., description="오타, 비문, 어색한 문장 구조 등 작문 오류 존재 여부")
+    corrections: List[str] = Field(..., description="문장 구조 개선, 어휘력 확장, 오타 교정 등을 위한 구체적인 대안 문장 목록")
+    feedback: str = Field(..., description="단순한 문법 지적을 넘어, 글의 응집력과 문장력 등 전반적인 작문 능력을 향상시키기 위한 매우 상세하고 예리한 조언")
 
 class ExpertFeedback(BaseModel):
     """최종 생성된 AI 및 전문가 피드백 데이터 모델"""
