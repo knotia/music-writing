@@ -14,20 +14,28 @@ from src.api.llm_client import client
 
 router = APIRouter(prefix="/analyze", tags=["Analysis"])
 
+import re
+
 class RecentFeedback(BaseModel):
     raw_sentence: str
     translated_expert_sentence: str
     educational_feedback: str
 
+class CategoryScore(BaseModel):
+    subject: str
+    A: int
+    fullMark: int = 5
+
+class TrendData(BaseModel):
+    name: str
+    score: int
+
 class ProgressReport(BaseModel):
     total_entries: int
-    most_frequent_error: str
+    radar_data: List[CategoryScore]
+    trend_data: List[TrendData]
+    improvements_needed: List[str]
     recent_feedback: Optional[RecentFeedback]
-    # 상세 지표
-    grammar_and_spelling: str
-    coherence_and_flow: str
-    musical_depth: str
-    overall_progress_feedback: str
 
 @router.get("/progress", response_model=ProgressReport)
 async def get_progress_report(
@@ -35,89 +43,102 @@ async def get_progress_report(
     current_user: User = Depends(get_current_user)
 ):
     """
-    학생의 누적된 데이터를 바탕으로 다양한 항목(문법, 결속성, 음악적 깊이)을 분석하고 최근 피드백을 반환합니다.
+    학생의 누적된 데이터를 파싱하여 차트 시각화용 데이터를 반환합니다.
     """
     histories = db.query(AnalysisHistory).filter(AnalysisHistory.user_id == current_user.id).order_by(AnalysisHistory.created_at.asc()).all()
     
     if not histories:
         return ProgressReport(
             total_entries=0,
-            most_frequent_error="없음",
-            recent_feedback=None,
-            grammar_and_spelling="데이터가 부족합니다.",
-            coherence_and_flow="데이터가 부족합니다.",
-            musical_depth="데이터가 부족합니다.",
-            overall_progress_feedback="분석을 위해 먼저 감상평을 입력해보세요."
+            radar_data=[],
+            trend_data=[],
+            improvements_needed=[],
+            recent_feedback=None
         )
 
     total_entries = len(histories)
-    error_counts = {}
-    history_texts = []
+    
+    # 1. 정규식을 통한 피드백 파싱
+    eval_pattern = re.compile(r"-\s*\*\*(.*?)(?:\s*\((\d)\/5\))?\*\*\s*:\s*(.*)")
+    
+    category_totals = {}
+    category_counts = {}
+    trend_data = []
+    improvements = []
     
     for idx, h in enumerate(histories):
-        err = h.error_type
-        error_counts[err] = error_counts.get(err, 0) + 1
-        history_texts.append(f"[{idx+1}회차] 문장: {h.raw_sentence}")
+        text = h.educational_feedback or ""
+        # evaluations 섹션 추출
+        evals_section = ""
+        match = re.search(r"#\s*evaluations\s*\n([\s\S]*)", text, re.IGNORECASE)
+        if match:
+            evals_section = match.group(1)
+        
+        entry_total_score = 0
+        entry_items = 0
+        
+        for line in evals_section.split('\n'):
+            line = line.strip()
+            if not line.startswith('-'):
+                continue
+            
+            m = eval_pattern.match(line)
+            if m:
+                cat = m.group(1).strip()
+                score_str = m.group(2)
+                advice = m.group(3).strip()
+                
+                score = int(score_str) if score_str else 3
+                
+                category_totals[cat] = category_totals.get(cat, 0) + score
+                category_counts[cat] = category_counts.get(cat, 0) + 1
+                
+                entry_total_score += score
+                entry_items += 1
+                
+                # 최근 3개 기록 중 3점 이하인 항목을 개선점으로 추가
+                if idx >= len(histories) - 3 and score <= 3:
+                    improvements.append(f"[{cat} 보완점] {advice}")
 
-    most_frequent_error = max(error_counts, key=error_counts.get) if error_counts else "none"
+        # Trend Data (총점의 평균을 100점 만점으로 환산)
+        if entry_items > 0:
+            avg = (entry_total_score / entry_items) * 20 # 5점 만점 -> 100점 만점
+            trend_data.append(TrendData(name=f"{idx+1}회차", score=int(avg)))
+        else:
+            trend_data.append(TrendData(name=f"{idx+1}회차", score=0))
+            
+    # Radar Data 생성 (평균 계산)
+    radar_data = []
+    for cat in category_totals:
+        avg_score = round(category_totals[cat] / category_counts[cat])
+        radar_data.append(CategoryScore(subject=cat, A=avg_score, fullMark=5))
+        
+    # 만약 취약점이 없다면 칭찬 문구 추가
+    if not improvements:
+        improvements.append("전반적으로 매우 훌륭한 작성 능력을 유지하고 있습니다. 현재의 논리적이고 객관적인 톤을 계속 유지해 주세요!")
+        
+    # 역순 정렬 후 최대 5개까지만 노출
+    improvements.reverse()
+    improvements = improvements[:5]
     
     recent_h = histories[-1]
+    
+    # Translation section 추출
+    translation = ""
+    tr_match = re.search(r"#\s*translation\s*\n([\s\S]*?)(?=\n#|$)", recent_h.educational_feedback or "", re.IGNORECASE)
+    if tr_match:
+        translation = tr_match.group(1).strip()
+
     recent_feedback = RecentFeedback(
         raw_sentence=recent_h.raw_sentence or "",
-        translated_expert_sentence=recent_h.translated_sentence or "",
+        translated_expert_sentence=translation or "데이터 없음",
         educational_feedback=recent_h.educational_feedback or ""
     )
 
-    if client:
-        prompt = f"""
-당신은 학생의 음악적 사고와 작문 능력을 꼼꼼하게 평가하는 교육자입니다.
-아래는 해당 학생이 시간에 따라 작성한 감상평 문장들입니다.
-이 기록들을 보고 아래의 세부 항목에 대해 자세하게 평가해주세요.
-
-기록:
-{chr(10).join(history_texts)}
-"""
-        try:
-            class LLMProgress(BaseModel):
-                grammar_and_spelling: str
-                coherence_and_flow: str
-                musical_depth: str
-                overall_progress_feedback: str
-
-            response = client.models.generate_content(
-                model='gemini-2.5-flash',
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=LLMProgress,
-                    temperature=0.7,
-                ),
-            )
-            parsed = response.parsed
-            
-            grammar = parsed.grammar_and_spelling
-            coherence = parsed.coherence_and_flow
-            depth = parsed.musical_depth
-            overall = parsed.overall_progress_feedback
-            
-        except Exception as e:
-            print("LLM Error in Progress:", e)
-            grammar = "AI 분석 중 오류가 발생했습니다."
-            coherence = "AI 분석 중 오류가 발생했습니다."
-            depth = "AI 분석 중 오류가 발생했습니다."
-            overall = "잠시 후 다시 시도해주세요."
-    else:
-        grammar = "API 키가 설정되지 않았습니다."
-        coherence = "API 키가 설정되지 않았습니다."
-        depth = "API 키가 설정되지 않았습니다."
-        overall = "Gemini API 키를 설정해주세요."
-
     return ProgressReport(
         total_entries=total_entries,
-        most_frequent_error=most_frequent_error,
-        recent_feedback=recent_feedback,
-        grammar_and_spelling=grammar,
-        coherence_and_flow=coherence,
-        musical_depth=depth,
-        overall_progress_feedback=overall
+        radar_data=radar_data,
+        trend_data=trend_data,
+        improvements_needed=improvements,
+        recent_feedback=recent_feedback
     )

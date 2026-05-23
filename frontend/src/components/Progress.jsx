@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getProgress } from '../api';
-import { TrendingUp, Award, BookOpen, PenTool, CheckCircle } from 'lucide-react';
+import { TrendingUp, Activity, PenTool, CheckCircle, Target, AlertTriangle } from 'lucide-react';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
 export default function Progress() {
   const [data, setData] = useState(null);
@@ -29,87 +30,99 @@ export default function Progress() {
     return <div className="error-text" style={{ textAlign: 'center' }}>{error}</div>;
   }
 
+  if (data.total_entries === 0) {
+    return (
+      <div className="glass-card" style={{ textAlign: 'center', padding: '40px' }}>
+        <h2>성장 리포트 데이터가 없습니다.</h2>
+        <p style={{ color: 'var(--text-secondary)' }}>새로운 감상평을 작성하고 분석을 받아보세요!</p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       <div className="glass-card">
         <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-          <TrendingUp color="var(--primary)" />
-          나의 다차원적 성장 리포트
+          <Activity color="var(--primary)" />
+          나의 다차원적 성장 대시보드
         </h2>
         <p style={{ color: 'var(--text-secondary)' }}>
-          지금까지 기록한 총 <strong>{data.total_entries}</strong>개의 감상평을 바탕으로 세밀하게 분석된 결과입니다.
+          지금까지 기록한 총 <strong>{data.total_entries}</strong>개의 감상평을 실시간으로 분석한 지표입니다.
         </p>
-        
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginTop: '32px' }}>
+          
+          {/* 레이더 차트 (역량 밸런스) */}
+          <div style={{ padding: '24px', background: 'rgba(255,255,255,0.8)', border: '1px solid var(--surface-border)', borderRadius: '12px' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem', marginBottom: '16px' }}>
+              <Target size={20} color="var(--accent)" />
+              작문 역량 밸런스 (평균 점수)
+            </h3>
+            <div style={{ width: '100%', height: '250px' }}>
+              <ResponsiveContainer>
+                <RadarChart data={data.radar_data}>
+                  <PolarGrid />
+                  <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--text-secondary)', fontSize: 12 }} />
+                  <PolarRadiusAxis angle={30} domain={[0, 5]} />
+                  <Radar name="내 역량" dataKey="A" stroke="var(--primary)" fill="var(--primary)" fillOpacity={0.5} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* 꺾은선 차트 (성장 추이) */}
+          <div style={{ padding: '24px', background: 'rgba(255,255,255,0.8)', border: '1px solid var(--surface-border)', borderRadius: '12px' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem', marginBottom: '16px' }}>
+              <TrendingUp size={20} color="var(--primary)" />
+              시간에 따른 종합 점수 추이
+            </h3>
+            <div style={{ width: '100%', height: '250px' }}>
+              <ResponsiveContainer>
+                <LineChart data={data.trend_data}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="score" stroke="var(--accent)" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+          
+        </div>
+
+        {/* 개선점 요약 (Bullet Points) */}
+        <div style={{ marginTop: '32px', padding: '24px', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px' }}>
+          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem', color: 'var(--error)', marginBottom: '16px' }}>
+            <AlertTriangle size={20} />
+            집중 보완이 필요한 부분 (최근 지적 사항)
+          </h3>
+          <ul style={{ listStyleType: 'disc', paddingLeft: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {data.improvements_needed.map((item, idx) => (
+              <li key={idx} style={{ color: 'var(--text-primary)', lineHeight: '1.5' }}>
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* 가장 최근의 피드백 (하이라이트) */}
         {data.recent_feedback && (
-          <div style={{ marginTop: '24px', padding: '20px', background: 'rgba(37, 99, 235, 0.05)', border: '1px solid var(--primary)', borderRadius: '12px' }}>
+          <div style={{ marginTop: '32px', padding: '20px', background: 'rgba(37, 99, 235, 0.05)', border: '1px solid var(--primary)', borderRadius: '12px' }}>
             <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem', color: 'var(--primary)' }}>
               <CheckCircle size={20} />
-              가장 최근의 즉각적 피드백
+              가장 최근에 작성한 글과 모범 교정
             </h3>
-            <p style={{ fontStyle: 'italic', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-              내가 쓴 원문: "{data.recent_feedback.raw_sentence}"
+            <p style={{ fontStyle: 'italic', color: 'var(--text-secondary)', marginBottom: '12px', marginTop: '12px' }}>
+              "{data.recent_feedback.raw_sentence}"
             </p>
-            <div style={{ background: '#fff', padding: '16px', borderRadius: '8px', marginBottom: '12px' }}>
-              <strong style={{ display: 'block', marginBottom: '4px' }}>전문가 수준 번역:</strong>
-              {data.recent_feedback.translated_expert_sentence}
-            </div>
             <div style={{ background: '#fff', padding: '16px', borderRadius: '8px' }}>
-              <strong style={{ display: 'block', marginBottom: '4px' }}>교육적 조언:</strong>
-              {data.recent_feedback.educational_feedback}
+              <strong style={{ display: 'block', marginBottom: '8px', color: 'var(--accent)' }}>✨ 전문가의 학술적 교정:</strong>
+              {data.recent_feedback.translated_expert_sentence}
             </div>
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginTop: '32px' }}>
-          
-          <div style={{ padding: '24px', background: 'rgba(255,255,255,0.8)', border: '1px solid var(--surface-border)', borderRadius: '12px' }}>
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem' }}>
-              <PenTool size={20} color="var(--accent)" />
-              문법 및 어휘력
-            </h3>
-            <p style={{ lineHeight: '1.6', color: 'var(--text-primary)', marginTop: '16px', whiteSpace: 'pre-wrap' }}>
-              {data.grammar_and_spelling}
-            </p>
-          </div>
-
-          <div style={{ padding: '24px', background: 'rgba(255,255,255,0.8)', border: '1px solid var(--surface-border)', borderRadius: '12px' }}>
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem' }}>
-              <TrendingUp size={20} color="var(--primary)" />
-              논리성 및 결속력
-            </h3>
-            <p style={{ lineHeight: '1.6', color: 'var(--text-primary)', marginTop: '16px', whiteSpace: 'pre-wrap' }}>
-              {data.coherence_and_flow}
-            </p>
-          </div>
-
-          <div style={{ padding: '24px', background: 'rgba(255,255,255,0.8)', border: '1px solid var(--surface-border)', borderRadius: '12px' }}>
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem' }}>
-              <BookOpen size={20} color="var(--accent)" />
-              음악적 사고의 깊이
-            </h3>
-            <p style={{ lineHeight: '1.6', color: 'var(--text-primary)', marginTop: '16px', whiteSpace: 'pre-wrap' }}>
-              {data.musical_depth}
-            </p>
-          </div>
-
-          <div style={{ gridColumn: '1 / -1', padding: '24px', background: 'rgba(124, 58, 237, 0.05)', border: '1px solid rgba(124, 58, 237, 0.2)', borderRadius: '12px' }}>
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem', color: 'var(--accent)' }}>
-              <Award size={20} />
-              종합 코멘트 및 학습 제안
-            </h3>
-            <p style={{ lineHeight: '1.6', color: 'var(--text-primary)', marginTop: '16px', whiteSpace: 'pre-wrap' }}>
-              {data.overall_progress_feedback}
-            </p>
-          </div>
-
-        </div>
-
-        <div style={{ marginTop: '32px', padding: '16px', background: 'rgba(0,0,0,0.05)', borderRadius: '8px', display: 'inline-block' }}>
-          <span style={{ color: 'var(--text-secondary)', marginRight: '8px' }}>가장 자주 발생했던 이론적 오류:</span>
-          <strong style={{ color: 'var(--error)' }}>
-            {data.most_frequent_error === 'none' ? '없음 (훌륭합니다!)' : data.most_frequent_error}
-          </strong>
-        </div>
       </div>
     </div>
   );
