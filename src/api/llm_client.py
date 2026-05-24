@@ -37,6 +37,14 @@ def get_musical_analysis_feedback(request_data: UserAnalysisRequest) -> ExpertFe
     style_label = "학술적 (Academic)" if request_data.writing_style == "academic" else "일반적 (General)"
     user_message += f"--- [목표 문체] ---\n{style_label}\n----------------------\n\n"
     
+    age_instructions = {
+        "elementary": "초등학생 🧒: 다정하고 친절한 존댓말(~해요, ~했어요)을 사용하세요. 어려운 한자어 대신 쉬운 단어로 칭찬과 격려 위주로 피드백하고, 설명은 아주 쉽고 직관적이어야 합니다.",
+        "middle": "중·고등학생 🧑‍🎓: 정중하고 명확한 교사 톤(~입니다, ~하세요)을 사용하세요. 논리적 근거를 제시하고, 학생이 이해할 수 있는 수준의 음악 이론 용어를 적절히 사용하세요.",
+        "adult": "성인·대학생 👨‍💼: 객관적이고 논리적인 전문 학술 톤을 사용하세요. 깊이 있는 음악 이론적 분석과 학술적 비평 수준의 피드백을 제공하세요."
+    }
+    age_group = request_data.age_group or "middle"
+    user_message += f"--- [사용자 연령대 맞춤 설정 (매우 중요)] ---\n{age_instructions.get(age_group, age_instructions['middle'])}\n이 연령대에 맞는 난이도와 어조(말투)로 모든 피드백(질문, 팁, 평가, 번역 등)을 작성하세요.\n----------------------\n\n"
+    
     if request_data.assignment_question:
         user_message += f"--- [과제 논제/질문] ---\n{request_data.assignment_question}\n----------------------\n\n"
     

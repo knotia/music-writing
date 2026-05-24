@@ -16,6 +16,7 @@ class UserAnalysisRequest(BaseModel):
     raw_sentence: str = Field(..., description="사용자가 작성한 자연어 분석 문장")
     assignment_question: Optional[str] = Field(None, description="학생이 답변하고자 하는 원본 과제 질문 또는 논제")
     writing_style: str = Field("academic", description="목표 문체 (academic 또는 general)")
+    age_group: str = Field("middle", description="사용자 연령대 (elementary, middle, adult)")
     history: Optional[List[dict]] = Field(None, description="대화형 진행 시 이전 꼬리 질문 및 답변 기록")
     target_music_id: Optional[str] = Field(None, description="분석 대상이 되는 곡의 ID (있는 경우)")
     extracted_elements: Optional[ThinkingElements] = Field(None, description="AI 모델에 의해 1차적으로 추출된 사고 요소들")

@@ -52,7 +52,7 @@ export const getUserMe = async () => {
   return request('/auth/me');
 };
 
-export const analyzeThoughtStream = async (rawSentence, sessionId, history = [], assignmentQuestion = '', writingStyle = 'academic') => {
+export const analyzeThoughtStream = async (rawSentence, sessionId, history = [], assignmentQuestion = '', writingStyle = 'academic', ageGroup = 'middle') => {
   const token = getToken();
   const headers = {
     'Content-Type': 'application/json',
@@ -64,6 +64,7 @@ export const analyzeThoughtStream = async (rawSentence, sessionId, history = [],
     raw_sentence: rawSentence,
     session_id: sessionId,
     writing_style: writingStyle,
+    age_group: ageGroup,
     history: history
   };
 

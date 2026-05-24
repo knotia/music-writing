@@ -11,6 +11,8 @@ function App() {
   const [role, setRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [ageGroup, setAgeGroup] = useState(localStorage.getItem('ageGroup') || 'middle');
+
   useEffect(() => {
     const checkUser = async () => {
       if (isAuthenticated) {
@@ -38,6 +40,12 @@ function App() {
     setRole(null);
   };
 
+  const handleAgeChange = (e) => {
+    const val = e.target.value;
+    setAgeGroup(val);
+    localStorage.setItem('ageGroup', val);
+  };
+
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -50,6 +58,19 @@ function App() {
           <div className="nav-links">
             {role === 'student' && (
               <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '16px' }}>
+                  <label htmlFor="ageGroup" style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>나의 연령대:</label>
+                  <select 
+                    id="ageGroup" 
+                    value={ageGroup} 
+                    onChange={handleAgeChange}
+                    style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--surface-border)', outline: 'none' }}
+                  >
+                    <option value="elementary">초등학생 🧒</option>
+                    <option value="middle">중/고등학생 🧑‍🎓</option>
+                    <option value="adult">성인/대학생 👨‍💼</option>
+                  </select>
+                </div>
                 <Link to="/dashboard">새 감상평 쓰기</Link>
                 <Link to="/progress">나의 성장 리포트</Link>
               </>
@@ -73,11 +94,11 @@ function App() {
           />
           <Route 
             path="/dashboard" 
-            element={isAuthenticated && role === 'student' ? <Dashboard /> : <Navigate to={role === 'teacher' ? "/teacher" : "/login"} />} 
+            element={isAuthenticated && role === 'student' ? <Dashboard ageGroup={ageGroup} /> : <Navigate to={role === 'teacher' ? "/teacher" : "/login"} />} 
           />
           <Route 
             path="/progress" 
-            element={isAuthenticated && role === 'student' ? <Progress /> : <Navigate to={role === 'teacher' ? "/teacher" : "/login"} />} 
+            element={isAuthenticated && role === 'student' ? <Progress ageGroup={ageGroup} /> : <Navigate to={role === 'teacher' ? "/teacher" : "/login"} />} 
           />
           <Route 
             path="/teacher" 
