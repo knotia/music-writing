@@ -92,6 +92,10 @@ export const getProgress = async () => {
   return request('/analyze/progress');
 };
 
+export const getHistory = async () => {
+  return request('/analyze/history');
+};
+
 // Teacher APIs
 export const getStudents = async () => {
   return request('/teacher/students');

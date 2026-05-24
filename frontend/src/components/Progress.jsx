@@ -129,20 +129,57 @@ export default function Progress({ ageGroup = 'middle' }) {
           
         </div>
 
-        {/* 개선점 요약 (Bullet Points) */}
-        <div style={{ marginTop: '32px', padding: '24px', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '12px' }}>
-          <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.1rem', color: 'var(--error)', marginBottom: '16px' }}>
-            <AlertTriangle size={20} />
-            {t.alertTitle}
-          </h3>
-          <ul style={{ listStyleType: 'disc', paddingLeft: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {data.improvements_needed.map((item, idx) => (
-              <li key={idx} style={{ color: 'var(--text-primary)', lineHeight: '1.5' }}>
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {/* 개선점 요약 (Card UI) */}
+        {data.improvements_needed && data.improvements_needed.length > 0 && (
+          <div style={{ marginTop: '32px' }}>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.2rem', color: 'var(--text-primary)', marginBottom: '16px' }}>
+              <AlertTriangle size={24} color="var(--error)" />
+              {t.alertTitle}
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+              {data.improvements_needed.map((item, idx) => {
+                const isPraise = item.category === '완벽해요!';
+                const bgColor = isPraise ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.05)';
+                const borderColor = isPraise ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)';
+                const titleColor = isPraise ? '#059669' : '#b91c1c';
+                
+                return (
+                  <div key={idx} style={{ 
+                    background: bgColor, 
+                    border: `1px solid ${borderColor}`, 
+                    borderRadius: '12px', 
+                    padding: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                    boxShadow: '0 4px 6px rgba(0,0,0,0.02)'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <strong style={{ fontSize: '1.05rem', color: titleColor }}>
+                        {isPraise ? '🎉 ' : '⚠️ '}{item.category}
+                      </strong>
+                      {!isPraise && (
+                        <span style={{ 
+                          fontSize: '0.8rem', 
+                          background: 'rgba(239, 68, 68, 0.15)', 
+                          color: '#b91c1c', 
+                          padding: '4px 8px', 
+                          borderRadius: '12px', 
+                          fontWeight: 'bold' 
+                        }}>
+                          최근 {item.count}회 지적
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--text-primary)', lineHeight: '1.6' }}>
+                      {item.advice}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* 가장 최근의 피드백 (하이라이트) */}
         {data.recent_feedback && (

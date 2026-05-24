@@ -4,6 +4,7 @@ import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
 import Progress from './components/Progress';
 import TeacherDashboard from './components/TeacherDashboard';
+import History from './components/History';
 import { getToken, removeToken, getUserMe } from './api';
 
 function App() {
@@ -72,6 +73,7 @@ function App() {
                   </select>
                 </div>
                 <Link to="/dashboard">새 감상평 쓰기</Link>
+                <Link to="/history">나의 글 보관함</Link>
                 <Link to="/progress">나의 성장 리포트</Link>
               </>
             )}
@@ -95,6 +97,10 @@ function App() {
           <Route 
             path="/dashboard" 
             element={isAuthenticated && role === 'student' ? <Dashboard ageGroup={ageGroup} /> : <Navigate to={role === 'teacher' ? "/teacher" : "/login"} />} 
+          />
+          <Route 
+            path="/history" 
+            element={isAuthenticated && role === 'student' ? <History ageGroup={ageGroup} /> : <Navigate to={role === 'teacher' ? "/teacher" : "/login"} />} 
           />
           <Route 
             path="/progress" 
