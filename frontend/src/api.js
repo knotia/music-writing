@@ -104,3 +104,11 @@ export const getStudents = async () => {
 export const getStudentProgress = async (studentId) => {
   return request(`/teacher/students/${studentId}/progress`);
 };
+
+export const getClassOverview = async () => {
+  return request('/teacher/overview');
+};
+
+export const getStudentHistory = async (studentId) => {
+  return request(`/teacher/students/${studentId}/history`);
+};
